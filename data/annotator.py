@@ -9,7 +9,6 @@ class HateSpeechAnnotator:
         self.root = root
         self.csv_file = csv_file
         
-        # Colors for modern UI
         self.colors = {
             "bg_dark": "#2c3e50",
             "bg_light": "#ecf0f1",
@@ -21,18 +20,13 @@ class HateSpeechAnnotator:
             "text_light": "#ecf0f1",
             "btn_hover": "#2980b9"
         }
-        
-        # Check if file exists
         if not os.path.exists(csv_file):
             messagebox.showerror("File Not Found", f"Could not find {csv_file}. Please make sure the file exists.")
             root.destroy()
             return
         
         try:
-            # Load data
             self.data = pd.read_csv(csv_file)
-            
-            # Check if data has required columns
             if 'text' not in self.data.columns:
                 messagebox.showerror("Invalid File", "The CSV file must have a 'text' column.")
                 root.destroy()
@@ -45,24 +39,20 @@ class HateSpeechAnnotator:
             root.destroy()
             return
         
-        # Find first unannotated entry
         self.current_index = self.find_next_unannotated()
         self.completed_count = self.count_completed()
         self.version = self.get_next_version()
         self.unsaved_changes = False
         
-        # Set up the main window
         self.root.title(f"Turkish Hate Speech Annotator - {os.path.basename(self.csv_file)}")
         self.root.geometry("800x600")
         self.root.configure(bg=self.colors["bg_dark"])
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
-        # Apply a modern theme if ttk is used
         self.style = ttk.Style()
-        self.style.theme_use('clam')  # Use a modern theme as base
+        self.style.theme_use('clam')
         self.style.configure("TProgressbar", thickness=25, background=self.colors["accent_blue"])
         
-        # Create menu bar with File menu
         self.menu_bar = tk.Menu(self.root)
         self.root.config(menu=self.menu_bar)
         
@@ -73,7 +63,6 @@ class HateSpeechAnnotator:
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.on_closing)
         
-        # Bind keyboard shortcuts
         self.root.bind('h', lambda event: self.annotate("hate"))
         self.root.bind('n', lambda event: self.annotate("not-hate"))
         self.root.bind('s', lambda event: self.skip_text())
@@ -82,10 +71,8 @@ class HateSpeechAnnotator:
         self.root.bind('<Left>', lambda event: self.previous_text())
         self.root.bind('<Control-s>', lambda event: self.save_annotations())
         
-        # Create the UI components
         self.setup_ui()
         
-        # Load the first text to annotate
         self.load_next_text()
     
     def find_next_unannotated(self):
@@ -100,10 +87,8 @@ class HateSpeechAnnotator:
         return self.data['label'].notna().sum() - self.data['label'].eq('').sum()
     
     def get_next_version(self):
-        # Extract the base name without extension
         base_name = os.path.splitext(self.csv_file)[0]
         
-        # Find all existing versions
         pattern = re.compile(f"{re.escape(base_name)}_v(\\d+)\\.csv")
         versions = []
         
@@ -112,11 +97,9 @@ class HateSpeechAnnotator:
             if match:
                 versions.append(int(match.group(1)))
         
-        # Return the next version number
         return max(versions) + 1 if versions else 1
     
     def setup_ui(self):
-        # Create frames for better organization with modern styling
         self.top_frame = tk.Frame(self.root, bg=self.colors["bg_dark"], pady=10)
         self.top_frame.pack(fill="x", padx=20, pady=(20, 10))
         
@@ -130,7 +113,6 @@ class HateSpeechAnnotator:
         self.button_frame = tk.Frame(self.root, bg=self.colors["bg_dark"])
         self.button_frame.pack(fill="x", padx=20, pady=20)
         
-        # Progress label
         self.progress_label = tk.Label(
             self.top_frame, 
             text=f"Annotating text {self.current_index + 1} of {len(self.data)}",
@@ -140,7 +122,6 @@ class HateSpeechAnnotator:
         )
         self.progress_label.pack(side="left")
         
-        # Completed count label
         self.completed_label = tk.Label(
             self.top_frame, 
             text=f"Completed: {self.completed_count} / {len(self.data)}",
@@ -150,7 +131,6 @@ class HateSpeechAnnotator:
         )
         self.completed_label.pack(side="right")
         
-        # Text display area (scrollable) with modern styling
         self.text_display = scrolledtext.ScrolledText(
             self.text_frame,
             wrap=tk.WORD,
@@ -165,7 +145,6 @@ class HateSpeechAnnotator:
         )
         self.text_display.pack(fill="both", expand=True)
         
-        # Progress bar with modern styling
         self.progress_bar = ttk.Progressbar(
             self.status_frame, 
             orient="horizontal", 
@@ -177,7 +156,6 @@ class HateSpeechAnnotator:
         self.progress_bar["maximum"] = len(self.data)
         self.progress_bar["value"] = self.completed_count
         
-        # Current status label
         self.status_label = tk.Label(
             self.status_frame,
             text="Current annotation: None",
@@ -187,7 +165,6 @@ class HateSpeechAnnotator:
         )
         self.status_label.pack()
         
-        # Shortcut hints
         self.shortcuts_label = tk.Label(
             self.status_frame,
             text="Shortcuts: H = Hate, N = Not Hate, S = Skip, P = Previous, ← → = Navigate, Ctrl+S = Save",
@@ -197,11 +174,9 @@ class HateSpeechAnnotator:
         )
         self.shortcuts_label.pack(pady=5)
         
-        # Navigation button bar
         self.nav_frame = tk.Frame(self.root, bg=self.colors["bg_dark"])
         self.nav_frame.pack(fill="x", padx=20, pady=10)
         
-        # Previous button
         self.prev_button = tk.Button(
             self.nav_frame,
             text="← PREVIOUS (P)",
@@ -288,20 +263,16 @@ class HateSpeechAnnotator:
         )
         self.save_button.pack(side="left", padx=10)
         
-        # Add hover effects to buttons
         self.add_hover_effects()
     
     def add_hover_effects(self):
         """Add hover effects to buttons for better UX"""
         def on_enter(event, button, original_color):
-            # Darkens the button color slightly on hover
             button['background'] = self.darken_color(original_color)
             
         def on_leave(event, button, original_color):
-            # Restores original color when mouse leaves
             button['background'] = original_color
             
-        # Add effects to each button
         buttons = [
             (self.hate_button, self.colors["accent_red"]),
             (self.not_hate_button, self.colors["accent_green"]),
@@ -497,11 +468,9 @@ class HateSpeechAnnotator:
 
 
 def main():
-    # Create the root window
     root = tk.Tk()
-    root.withdraw()  # Hide the root window initially
+    root.withdraw()
     
-    # Open file dialog to select CSV file
     file_types = [
         ('CSV files', '*.csv'),
         ('All files', '*.*')
@@ -518,13 +487,10 @@ def main():
         root.destroy()
         return
     
-    # Show the root window now that we have a file
     root.deiconify()
     
-    # Create the annotator
     annotator = HateSpeechAnnotator(root, csv_file)
     
-    # Start the Tkinter event loop
     root.mainloop()
 
 
