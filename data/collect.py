@@ -61,9 +61,7 @@ def save_checkpoint():
         checkpoint_df.to_csv(CHECKPOINT_FILE, index=False)
         print(f"Saved checkpoint with {len(annotation_data)} entries.")
 
-REQUEST_DELAY = 2.0
-
-TARGET_COUNT = 2000
+TARGET_COUNT = 6000
 
 COMMENTS_LIMIT = 200
 
